@@ -156,12 +156,16 @@ export type Database = {
       email_logs: {
         Row: {
           created_at: string
+          daily_counter: number | null
           delivered_at: string | null
+          email_category: string | null
           email_type: Database["public"]["Enums"]["email_type"]
           error_message: string | null
           id: string
           member_number: string | null
           metadata: Json | null
+          priority: string | null
+          queued_for_date: string | null
           recipient_email: string
           resend_id: string | null
           sent_at: string | null
@@ -171,12 +175,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          daily_counter?: number | null
           delivered_at?: string | null
+          email_category?: string | null
           email_type: Database["public"]["Enums"]["email_type"]
           error_message?: string | null
           id?: string
           member_number?: string | null
           metadata?: Json | null
+          priority?: string | null
+          queued_for_date?: string | null
           recipient_email: string
           resend_id?: string | null
           sent_at?: string | null
@@ -186,12 +194,16 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          daily_counter?: number | null
           delivered_at?: string | null
+          email_category?: string | null
           email_type?: Database["public"]["Enums"]["email_type"]
           error_message?: string | null
           id?: string
           member_number?: string | null
           metadata?: Json | null
+          priority?: string | null
+          queued_for_date?: string | null
           recipient_email?: string
           resend_id?: string | null
           sent_at?: string | null
@@ -1268,6 +1280,12 @@ export type Database = {
           failure_details: Json
         }[]
       }
+      get_email_quota: {
+        Args: {
+          category: string
+        }
+        Returns: number
+      }
       get_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1353,6 +1371,10 @@ export type Database = {
         Returns: number
       }
       perform_user_roles_sync: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      process_email_queue: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
