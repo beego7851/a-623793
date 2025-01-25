@@ -2,14 +2,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Clock, ChartBar } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
+import { Mail, Clock, ChartBar, Settings } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 const EmailManagementCard = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: emailStats, isLoading } = useQuery({
+  const { data: emailStats, isLoading: statsLoading } = useQuery({
     queryKey: ['email-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,6 +30,43 @@ const EmailManagementCard = () => {
       };
       
       return stats;
+    }
+  });
+
+  const { data: queueConfig, isLoading: configLoading } = useQuery({
+    queryKey: ['queue-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('email_queue_config')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const updateConfigMutation = useMutation({
+    mutationFn: async ({ id, daily_limit, auto_process_interval }: { id: string, daily_limit: number, auto_process_interval: number }) => {
+      const { error } = await supabase
+        .from('email_queue_config')
+        .update({ daily_limit, auto_process_interval })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['queue-config'] });
+      toast({
+        title: "Settings Updated",
+        description: "Email queue configuration has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
@@ -53,6 +92,20 @@ const EmailManagementCard = () => {
     }
   };
 
+  const handleConfigUpdate = (id: string, field: 'daily_limit' | 'auto_process_interval', value: string) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0) return;
+
+    const config = queueConfig?.find(c => c.id === id);
+    if (!config) return;
+
+    updateConfigMutation.mutate({
+      id,
+      daily_limit: field === 'daily_limit' ? numValue : config.daily_limit,
+      auto_process_interval: field === 'auto_process_interval' ? numValue : config.auto_process_interval
+    });
+  };
+
   return (
     <Card className="bg-dashboard-card border-white/10">
       <CardHeader>
@@ -76,15 +129,15 @@ const EmailManagementCard = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-dashboard-text">Pending</span>
-                <span className="text-dashboard-accent1">{isLoading ? '...' : emailStats?.pending}</span>
+                <span className="text-dashboard-accent1">{statsLoading ? '...' : emailStats?.pending}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-dashboard-text">Sent</span>
-                <span className="text-dashboard-accent3">{isLoading ? '...' : emailStats?.sent}</span>
+                <span className="text-dashboard-accent3">{statsLoading ? '...' : emailStats?.sent}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-dashboard-text">Failed</span>
-                <span className="text-dashboard-error">{isLoading ? '...' : emailStats?.failed}</span>
+                <span className="text-dashboard-error">{statsLoading ? '...' : emailStats?.failed}</span>
               </div>
             </div>
           </div>
@@ -94,27 +147,51 @@ const EmailManagementCard = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-dashboard-text">Payment</span>
-                <span className="text-dashboard-accent1">{isLoading ? '...' : emailStats?.payment}</span>
+                <span className="text-dashboard-accent1">{statsLoading ? '...' : emailStats?.payment}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-dashboard-text">General</span>
-                <span className="text-dashboard-accent1">{isLoading ? '...' : emailStats?.general}</span>
+                <span className="text-dashboard-accent1">{statsLoading ? '...' : emailStats?.general}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-dashboard-card/50 p-4 rounded-lg border border-white/10">
             <h3 className="text-sm text-dashboard-text mb-2">Queue Settings</h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-dashboard-text">
-                <Clock className="w-4 h-4" />
-                <span>Auto-process every 5 min</span>
+            {configLoading ? (
+              <div className="text-dashboard-text">Loading settings...</div>
+            ) : (
+              <div className="space-y-4">
+                {queueConfig?.map((config) => (
+                  <div key={config.id} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-dashboard-text" />
+                      <span className="text-dashboard-text capitalize">{config.category}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ChartBar className="w-4 h-4 text-dashboard-text" />
+                      <span className="text-dashboard-text text-sm">Daily Limit:</span>
+                      <Input
+                        type="number"
+                        value={config.daily_limit}
+                        onChange={(e) => handleConfigUpdate(config.id, 'daily_limit', e.target.value)}
+                        className="w-20 h-8 text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-dashboard-text" />
+                      <span className="text-dashboard-text text-sm">Process Interval (min):</span>
+                      <Input
+                        type="number"
+                        value={config.auto_process_interval}
+                        onChange={(e) => handleConfigUpdate(config.id, 'auto_process_interval', e.target.value)}
+                        className="w-20 h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2 text-dashboard-text">
-                <ChartBar className="w-4 h-4" />
-                <span>Daily limit: 50/category</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </CardContent>

@@ -221,6 +221,33 @@ export type Database = {
           },
         ]
       }
+      email_queue_config: {
+        Row: {
+          auto_process_interval: number
+          category: string
+          created_at: string | null
+          daily_limit: number
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_process_interval?: number
+          category: string
+          created_at?: string | null
+          daily_limit?: number
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_process_interval?: number
+          category?: string
+          created_at?: string | null
+          daily_limit?: number
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       enhanced_roles: {
         Row: {
           created_at: string | null
