@@ -97,8 +97,8 @@ const MemberCard = ({ member, userRole, onEditClick, onDeleteClick }: MemberCard
       <AccordionTrigger className="hover:no-underline">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full text-left px-1">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-dashboard-accent1">{member.full_name}</h3>
-            <p className="text-sm text-dashboard-muted">Member Number: {member.member_number}</p>
+            <h3 className="text-xl font-semibold text-dashboard-accent1">{member.full_name}</h3>
+            <p className="text-base text-dashboard-accent2">Member Number: {member.member_number}</p>
           </div>
           {(canModify || userRole === 'admin') && (
             <div className="flex items-center space-x-2">
@@ -141,26 +141,25 @@ const MemberCard = ({ member, userRole, onEditClick, onDeleteClick }: MemberCard
         <div className="space-y-6 py-4">
           {/* Contact Information */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-dashboard-accent1">Contact Information</h4>
+            <h4 className="text-lg font-medium text-dashboard-accent1">Contact Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dashboard-card p-3 rounded-lg border border-dashboard-cardBorder">
-              <p className="text-sm text-dashboard-text">Email: <span className="text-white">{member.email || 'Not provided'}</span></p>
-              <p className="text-sm text-dashboard-text">Phone: <span className="text-white">{member.phone || 'Not provided'}</span></p>
-              <p className="text-sm text-dashboard-text">Date of Birth: <span className="text-white">{member.date_of_birth ? format(new Date(member.date_of_birth), 'dd/MM/yyyy') : 'Not provided'}</span></p>
-              <p className="text-sm text-dashboard-text">Gender: <span className="text-white">{member.gender || 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Email: <span className="text-white font-medium">{member.email || 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Phone: <span className="text-white font-medium">{member.phone || 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Date of Birth: <span className="text-white font-medium">{member.date_of_birth ? format(new Date(member.date_of_birth), 'dd/MM/yyyy') : 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Gender: <span className="text-white font-medium">{member.gender || 'Not provided'}</span></p>
             </div>
           </div>
 
           {/* Address Information */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-dashboard-accent2">Address Details</h4>
+            <h4 className="text-lg font-medium text-dashboard-accent2">Address Details</h4>
             <div className="bg-dashboard-card p-3 rounded-lg border border-dashboard-cardBorder">
-              <p className="text-sm text-dashboard-text">Street: <span className="text-white">{member.address || 'Not provided'}</span></p>
-              <p className="text-sm text-dashboard-text">Town: <span className="text-white">{member.town || 'Not provided'}</span></p>
-              <p className="text-sm text-dashboard-text">Postcode: <span className="text-white">{member.postcode || 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Street: <span className="text-white font-medium">{member.address || 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Town: <span className="text-white font-medium">{member.town || 'Not provided'}</span></p>
+              <p className="text-base text-dashboard-text">Postcode: <span className="text-white font-medium">{member.postcode || 'Not provided'}</span></p>
             </div>
           </div>
 
-          {/* Password Management Section for admins */}
           {userRole === 'admin' && (
             <MemberPasswordSection 
               memberNumber={member.member_number}
