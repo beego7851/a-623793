@@ -34,6 +34,7 @@ const generateReceiptEmail = ({
   paymentType,
   paymentMethod,
   collectorName,
+  paymentNumber
 }: {
   receiptNumber: string;
   memberName: string;
@@ -42,6 +43,7 @@ const generateReceiptEmail = ({
   paymentType: string;
   paymentMethod: string;
   collectorName: string;
+  paymentNumber: string;
 }) => {
   const formattedAmount = new Intl.NumberFormat('en-GB', {
     style: 'currency',
@@ -53,93 +55,52 @@ const generateReceiptEmail = ({
     <html>
       <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Payment Receipt</title>
-        <style>
-          body { 
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 20px;
-          }
-          .receipt-number {
-            color: #2563eb;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-          }
-          .details {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 8px;
-          }
-          .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 5px 0;
-          }
-          .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 0.9em;
-            color: #64748b;
-          }
-        </style>
       </head>
-      <body>
-        <div class="header">
-          <h1>PWA Burton</h1>
-          <h2>Payment Receipt</h2>
-        </div>
-        
-        <div class="receipt-number">
-          Receipt Number: ${receiptNumber}
-        </div>
+      <body style="margin: 0; padding: 0; background-color: #1A1F2C; font-family: Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #1A1F2C; color: #FFFFFF;">
+          <tr>
+            <td style="padding: 40px 20px; text-align: center; background: linear-gradient(to right, #9b87f5, #7E69AB);">
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: bold;">PWA Burton</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 20px; background-color: #2A2F3C;">
+              <h2 style="color: #9b87f5; font-size: 24px; margin-bottom: 20px;">Payment Receipt</h2>
+              
+              <div style="background-color: #1A1F2C; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3A3F4C;">
+                <p style="color: #9b87f5; font-size: 16px; margin: 0 0 5px 0;">Receipt Number</p>
+                <p style="color: #FFFFFF; font-size: 18px; margin: 0;">${receiptNumber}</p>
+              </div>
 
-        <div class="details">
-          <div class="detail-row">
-            <strong>Date:</strong>
-            <span>${new Date().toLocaleDateString('en-GB')}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Member Name:</strong>
-            <span>${memberName}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Member Number:</strong>
-            <span>${memberNumber}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Amount Paid:</strong>
-            <span>${formattedAmount}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Payment Type:</strong>
-            <span>${paymentType}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Payment Method:</strong>
-            <span>${paymentMethod}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Collector:</strong>
-            <span>${collectorName}</span>
-          </div>
-        </div>
+              <div style="background-color: #1A1F2C; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3A3F4C;">
+                <p style="color: #9b87f5; font-size: 16px; margin: 0 0 5px 0;">Payment Reference</p>
+                <p style="color: #FFFFFF; font-size: 18px; margin: 0;">${paymentNumber}</p>
+              </div>
 
-        <div class="footer">
-          <p>Thank you for your payment. Please keep this receipt for your records.</p>
-          <p>If you have any questions, please contact your collector or PWA Burton administration.</p>
-        </div>
+              <div style="margin: 20px 0;">
+                <p style="color: #D6BCFA; margin: 5px 0;">Member Name: ${memberName}</p>
+                <p style="color: #D6BCFA; margin: 5px 0;">Member Number: ${memberNumber}</p>
+                <p style="color: #D6BCFA; margin: 5px 0;">Amount Paid: ${formattedAmount}</p>
+                <p style="color: #D6BCFA; margin: 5px 0;">Payment Type: ${paymentType}</p>
+                <p style="color: #D6BCFA; margin: 5px 0;">Payment Method: ${paymentMethod}</p>
+                <p style="color: #D6BCFA; margin: 5px 0;">Collector: ${collectorName}</p>
+                <p style="color: #D6BCFA; margin: 5px 0;">Date: ${new Date().toLocaleDateString('en-GB')}</p>
+              </div>
+
+              <div style="border-top: 1px solid #3A3F4C; margin-top: 30px; padding-top: 20px;">
+                <p style="color: #9b87f5; font-size: 16px; margin-bottom: 10px;">Need Help?</p>
+                <p style="color: #FFFFFF; font-size: 14px; line-height: 20px;">If you have any questions about this payment, please contact your collector or PWA Burton administration.</p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px; text-align: center; background-color: #1A1F2C;">
+              <p style="color: #9b87f5; font-size: 14px; margin: 0;">PWA Burton Team</p>
+            </td>
+          </tr>
+        </table>
       </body>
     </html>
   `;
@@ -164,6 +125,18 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate receipt number
     const receiptNumber = `REC${Date.now()}`;
 
+    // Get payment number from payment_requests table
+    const { data: paymentData, error: paymentError } = await supabase
+      .from('payment_requests')
+      .select('payment_number')
+      .eq('id', paymentRequest.paymentId)
+      .single();
+
+    if (paymentError) {
+      console.error("Error getting payment number:", paymentError);
+      throw new Error("Failed to get payment number");
+    }
+
     // Get member email
     const { data: memberData, error: memberError } = await supabase
       .from('members')
@@ -176,28 +149,6 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to get member email");
     }
 
-    // Create receipt record
-    const { data: receipt, error: insertError } = await supabase
-      .from('payment_receipts')
-      .insert({
-        payment_id: paymentRequest.paymentId,
-        receipt_number: receiptNumber,
-        sent_to: memberData.email,
-        amount: paymentRequest.amount,
-        payment_type: paymentRequest.paymentType,
-        payment_method: paymentRequest.paymentMethod,
-        collector_name: paymentRequest.collectorName,
-        member_number: paymentRequest.memberNumber,
-        member_name: paymentRequest.memberName
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("Error creating receipt record:", insertError);
-      throw new Error("Failed to create receipt record");
-    }
-
     // Generate email HTML
     const emailHtml = generateReceiptEmail({
       receiptNumber,
@@ -206,7 +157,8 @@ const handler = async (req: Request): Promise<Response> => {
       amount: paymentRequest.amount,
       paymentType: paymentRequest.paymentType,
       paymentMethod: paymentRequest.paymentMethod,
-      collectorName: paymentRequest.collectorName
+      collectorName: paymentRequest.collectorName,
+      paymentNumber: paymentData.payment_number
     });
 
     // For testing, send to burtonpwa@gmail.com instead of member's email
@@ -236,16 +188,6 @@ const handler = async (req: Request): Promise<Response> => {
       id: emailData.id,
       timestamp: new Date().toISOString(),
     });
-
-    // Update receipt with email log
-    const { error: updateError } = await supabase
-      .from('payment_receipts')
-      .update({ email_log_id: emailData.id })
-      .eq('id', receipt.id);
-
-    if (updateError) {
-      console.error("Error updating receipt with email log:", updateError);
-    }
 
     return new Response(JSON.stringify(emailData), {
       status: 200,
