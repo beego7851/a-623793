@@ -54,15 +54,7 @@ const AllPaymentsTable = ({ showHistory = false }: AllPaymentsTableProps) => {
 
       // Group payments by collector name, with better error handling
       const groupedPayments = data?.reduce((acc, payment) => {
-        // Get collector name with proper null checking
         const collectorName = payment.collector?.name || 'Unassigned';
-        console.log('Processing payment:', {
-          id: payment.id,
-          collectorId: payment.collector_id,
-          collectorData: payment.collector,
-          collectorName
-        });
-
         if (!acc[collectorName]) {
           acc[collectorName] = [];
         }
@@ -108,12 +100,24 @@ const AllPaymentsTable = ({ showHistory = false }: AllPaymentsTableProps) => {
 
   const handleDelete = async (paymentId: string) => {
     try {
-      const { error } = await supabase
+      // First delete associated receipts
+      const { error: receiptError } = await supabase
+        .from('payment_receipts')
+        .delete()
+        .eq('payment_id', paymentId);
+
+      if (receiptError) {
+        console.error('Error deleting receipts:', receiptError);
+        throw receiptError;
+      }
+
+      // Then delete the payment request
+      const { error: paymentError } = await supabase
         .from('payment_requests')
         .delete()
         .eq('id', paymentId);
 
-      if (error) throw error;
+      if (paymentError) throw paymentError;
 
       toast({
         title: "Payment Deleted",
@@ -122,11 +126,11 @@ const AllPaymentsTable = ({ showHistory = false }: AllPaymentsTableProps) => {
 
       queryClient.invalidateQueries({ queryKey: ['payment-requests'] });
       queryClient.invalidateQueries({ queryKey: ['payment-statistics'] });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting payment:', error);
       toast({
         title: "Error",
-        description: "Failed to delete the payment record.",
+        description: error.message || "Failed to delete the payment record.",
         variant: "destructive",
       });
     }
@@ -182,7 +186,7 @@ const AllPaymentsTable = ({ showHistory = false }: AllPaymentsTableProps) => {
       <div className="p-6">
         <h2 className="text-xl font-medium text-white mb-4">Payment History & Approvals</h2>
         <Accordion type="single" collapsible className="space-y-4">
-          {collectors.map((collectorName) => (
+          {Object.keys(paymentsData?.groupedPayments || {}).map((collectorName) => (
             <AccordionItem
               key={collectorName}
               value={collectorName}
@@ -193,7 +197,7 @@ const AllPaymentsTable = ({ showHistory = false }: AllPaymentsTableProps) => {
                   <div className="flex items-center gap-2">
                     <span className="text-white font-medium">{collectorName}</span>
                     <span className="text-sm text-gray-400">
-                      ({groupedPayments[collectorName].length} payments)
+                      ({paymentsData?.groupedPayments[collectorName].length} payments)
                     </span>
                   </div>
                 </div>
@@ -203,7 +207,7 @@ const AllPaymentsTable = ({ showHistory = false }: AllPaymentsTableProps) => {
                   <Table>
                     <PaymentTableHeader />
                     <TableBody>
-                      {groupedPayments[collectorName].map((payment) => (
+                      {paymentsData?.groupedPayments[collectorName].map((payment) => (
                         <PaymentTableRow
                           key={payment.id}
                           payment={payment}
