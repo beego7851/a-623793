@@ -1,38 +1,133 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
-
-const data = [
-  { month: 'J', value: 30, revenue: 40 },
-  { month: 'F', value: 35, revenue: 45 },
-  { month: 'M', value: 40, revenue: 35 },
-  { month: 'A', value: 38, revenue: 30 },
-  { month: 'M', value: 42, revenue: 25 },
-  { month: 'J', value: 48, revenue: 40 },
-  { month: 'J', value: 45, revenue: 45 },
-  { month: 'A', value: 43, revenue: 50 },
-  { month: 'S', value: 44, revenue: 45 },
-  { month: 'O', value: 45, revenue: 55 },
-  { month: 'N', value: 47, revenue: 50 },
-  { month: 'D', value: 49, revenue: 60 },
-];
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
 
 const MonthlyChart = () => {
+  const { data: paymentHistory } = useQuery({
+    queryKey: ['paymentHistory'],
+    queryFn: async () => {
+      console.log('Fetching payment history...');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('No user logged in');
+
+      // First get the member number from the user metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      const memberNumber = user?.user_metadata?.member_number;
+      
+      if (!memberNumber) {
+        console.error('No member number found in user metadata');
+        throw new Error('Member number not found');
+      }
+
+      // Fetch all payments for this member
+      const { data: payments, error } = await supabase
+        .from('payment_requests')
+        .select('*')
+        .eq('member_number', memberNumber)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Generate last 12 months of data
+      const months = [];
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+        // Filter payments for this month
+        const monthPayments = payments?.filter(payment => {
+          const paymentDate = new Date(payment.created_at);
+          return paymentDate >= monthStart && paymentDate <= monthEnd;
+        }) || [];
+
+        // Calculate totals for each payment type
+        const annualPayment = monthPayments
+          .filter(p => p.payment_type === 'Annual Payment' && p.status === 'completed')
+          .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+        const emergencyPayment = monthPayments
+          .filter(p => p.payment_type === 'Emergency Collection' && p.status === 'completed')
+          .reduce((sum, p) => sum + (p.amount || 0), 0);
+        
+        months.push({
+          month: date.toLocaleString('default', { month: 'short' }),
+          annualPayment,
+          emergencyPayment,
+        });
+      }
+
+      return months;
+    },
+  });
+
   return (
-    <div className="dashboard-card h-[400px]">
-      <h2 className="text-xl font-medium mb-6">Monthly Income</h2>
-      <div className="h-[calc(100%-4rem)]">
+    <div className="dashboard-card h-[400px] transition-all duration-300 hover:shadow-lg">
+      <h2 className="text-xl font-semibold mb-6 text-dashboard-accent1">Payment History</h2>
+      <div className="h-[calc(100%-4rem)] relative">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="month" stroke="#828179" />
-            <YAxis stroke="#828179" />
+          <LineChart 
+            data={paymentHistory || []} 
+            margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+          >
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(255,255,255,0.05)"
+              vertical={false}
+            />
+            <XAxis 
+              dataKey="month" 
+              stroke="#828179"
+              tick={{ fill: '#828179', fontSize: 12 }}
+              axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            />
+            <YAxis 
+              stroke="#828179"
+              tick={{ fill: '#828179', fontSize: 12 }}
+              axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+              tickFormatter={(value) => `£${value}`}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#1a1a1a',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '12px',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              }}
+              labelStyle={{ color: '#828179', fontWeight: 600, marginBottom: '8px' }}
+              itemStyle={{ color: '#C4C3BB', fontSize: '12px' }}
+              formatter={(value) => [`£${value}`, '']}
+            />
+            <Legend 
+              verticalAlign="top" 
+              height={36}
+              wrapperStyle={{ 
+                color: '#828179',
+                paddingBottom: '20px',
+              }}
+              iconType="circle"
+              iconSize={8}
+            />
             <Line
               type="monotone"
-              dataKey="value"
+              dataKey="annualPayment"
+              name="Annual Payment"
               stroke="#8989DE"
-              strokeWidth={2}
-              dot={{ fill: '#8989DE' }}
+              strokeWidth={3}
+              dot={{ fill: '#8989DE', strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, stroke: '#8989DE', strokeWidth: 2 }}
             />
-            <Bar dataKey="revenue" fill="#61AAF2" opacity={0.3} />
+            <Line
+              type="monotone"
+              dataKey="emergencyPayment"
+              name="Emergency Payment"
+              stroke="#61AAF2"
+              strokeWidth={3}
+              dot={{ fill: '#61AAF2', strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, stroke: '#61AAF2', strokeWidth: 2 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
