@@ -23,6 +23,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    // Extract the JWT token
+    const token = authHeader.replace('Bearer ', '');
+
+    // Verify the JWT token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      throw new Error('Unauthorized');
+    }
+
     // Call the process_email_queue function
     const { data, error } = await supabase
       .rpc('process_email_queue');
@@ -53,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
         timestamp: new Date().toISOString()
       }),
       {
-        status: 500,
+        status: error.message === 'Unauthorized' ? 401 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );

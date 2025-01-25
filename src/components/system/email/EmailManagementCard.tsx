@@ -33,26 +33,21 @@ const EmailManagementCard = () => {
 
   const processQueue = async () => {
     try {
-      const response = await fetch(
-        'https://trzaeinxlytyqxptkuyj.functions.supabase.co/process-email-queue',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('process-email-queue', {
+        method: 'POST',
+      });
 
-      if (!response.ok) throw new Error('Failed to process queue');
+      if (error) throw error;
 
       toast({
         title: "Queue Processed",
         description: "Email queue has been processed successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error processing queue:', error);
       toast({
         title: "Error",
-        description: "Failed to process email queue",
+        description: error.message || "Failed to process email queue",
         variant: "destructive",
       });
     }
